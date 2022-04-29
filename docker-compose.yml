@@ -1,0 +1,50 @@
+## docker-compose services for the ExPlan app:
+
+version: "3"
+
+services:
+  pgadmin:
+    container_name: "explan_pgadmin"
+    image: "dpage/pgadmin4"
+    depends_on:
+      - "postdb"
+    environment:
+      PGADMIN_DEFAULT_EMAIL: "scott@ourdoodlehouse.org"
+      PGADMIN_DEFAULT_PASSWORD: "explan1532"
+      PGADMIN_DISABLE_POSTFIX: "absolutely"
+      PGADMIN_ENABLE_TLS: "yes"
+      PGADMIN_LISTEN_PORT: "8983"
+      PGADMIN_CONFIG_ENHANCED_COOKIE_PROTECTION: "True"
+      PGADMIN_CONFIG_MAIL_SERVER: "'fence.ourdoodlehouse.org'"
+      PGADMIN_CONFIG_MAIL_PORT: 587
+      PGADMIN_CONFIG_MAIL_USE_TLS: "True"
+    ports:
+      - "8980:8980"
+      - "8983:8983"
+    volumes:
+      - /etc/certificates/ourdoodlehouse.org/ourdoodlehouse.org.pem:/certs/server.cert:ro
+      - /etc/certificates/ourdoodlehouse.org/ourdoodlehouse.org.key:/certs/server.key:ro
+      - pgadmin_data:/var/lib/pgadmin
+    sysctls:
+      - "net.ipv6.conf.all.disable_ipv6=0"
+
+  postdb:
+    container_name: "explan_pgsql"
+    image: "postgres"
+    environment:
+      POSTGRES_PASSWORD: "explandb1532"
+      POSTGRES_USER: "postgres"
+    ports:
+      - "5432:5432"
+    volumes:
+      - explan_data:/var/lib/postgresql/data
+    sysctls:
+      - "net.ipv6.conf.all.disable_ipv6=0"
+
+volumes:
+  explan_data:
+    driver_opts:
+      type: "nfs"
+      o: "addr=bigyard,hard,rw,nfsvers=4"
+      device: ":/volume1/arm-twist/explan_data"
+  pgadmin_data:

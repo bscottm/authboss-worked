@@ -1,0 +1,5 @@
+*.exe
+go.work
+go.work.sum
+explan_udata.sqlite3
+.vscode/settings.json

@@ -1,0 +1,9 @@
+# =~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~
+# Example ExPlan configuration file
+# =~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~
+
+# SQLite signature: Required; don't change unless you know what you're doing.
+sqlSchemaSignature: 994c00019f7b620f88f974246459936748155ee71b3510b723810e9d9d9656aa
+
+# Host/address and port where ExPlan's API services requests
+# listenAddr: "localhost:3000"
