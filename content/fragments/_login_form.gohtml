@@ -1,0 +1,80 @@
+<!-- "scooter me fecit"
+
+Copyright 2022 B. Scott Michel
+
+This program is free software: you can redistribute it and/or modify it under
+the terms of the GNU General Public License as published by the Free Software
+Foundation, either version 3 of the License, or (at your option) any later
+version.
+
+This program is distributed in the hope that it will be useful, but WITHOUT ANY
+WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+PARTICULAR PURPOSE. See the GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License along with
+this program. If not, see <https://www.gnu.org/licenses/>.
+-->
+            <form class="form-horizontal" action="/auth/login" method="POST">
+                <!-- =~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~
+                Fragment template for the basic login form.
+                -->
+                <!-- =~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~
+                    Authboss form requirements:
+                    1. Must have either a "username" or "email" field. That's where authboss picks up
+                    the primary identifier (PID) -> name="email" or name="username"
+                    2. Must have a "password" field -> name="password".
+                =~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~ -->
+                <div class="row mb-2">
+                    <label for="email" class="col-4 col-form-label">E-mail</label>
+                    <div class="col-8">
+                        <input type="email" class="form-control email" name="email" id="auth_email" placeholder="user@example.com"/>
+                    </div>
+                    {{with .errors}}{{range .name}}<span class="bi-exclamation-triangle" style="color:red;">&nbsp;{{.}}</span><br />{{end}}{{end -}}
+                </div>
+                <div class="row  mb-2">
+                    <label for="password" class="col-4 col-form-label">Password</label>
+                    <div class="col-8">
+                        <input type="password" class="form-control password" name="password" id="auth_password" placeholder=""/>
+                    </div>
+                    {{with .errors}}{{range .email}}<span class="bi-exclamation-triangle" style="color:red;">&nbsp;{{.}}</span><br />{{end}}{{end -}}
+                </div>
+                {{ if .feature_remember }}
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <!-- Serious FM here. Authboss' default name for this field via the UserValuer
+                            structure type is "rm". And the value it must contain if checked must be "true".
+                            -->
+                            <input type="checkbox" class="form-check-input" name="rm" value="true">
+                            <label class="form-check-label" for="rm">
+                            Remember me
+                            </label>
+                        </div>
+	                {{with .redir}}
+                        <input type="hidden" name="redir" value="{{.}}" />
+                    {{end}}
+                    </div>
+                {{end -}}
+                <div class="input-group">
+                    <div class="mx-auto">
+                        <button type="submit" class="btn btn-primary">Sign In!</button>
+                    </div>
+                </div>
+                <hr>
+                <div class="row justify-content-between mb-2">
+                    <div class="col-7">
+                        Don't have an sign in?
+                    </div>
+                    <div class="col-4">
+                        <a class="btn btn-dark" href="/auth/register">Register</a>
+                    </div>
+                </div>
+                <div class="row justify-content-between mb-2">
+                    <div class="col-7">
+                        Forgot password?
+                    </div>
+                    <div class="col-4">
+                        <a class="btn btn-dark" href="/auth/recover">Recover!</a>
+                    </div>
+                </div>
+                {{ .csrfField }}
+            </form>

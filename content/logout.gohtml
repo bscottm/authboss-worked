@@ -1,0 +1,52 @@
+<!-- "scooter me fecit"
+
+Copyright 2022 B. Scott Michel
+
+This program is free software: you can redistribute it and/or modify it under
+the terms of the GNU General Public License as published by the Free Software
+Foundation, either version 3 of the License, or (at your option) any later
+version.
+
+This program is distributed in the hope that it will be useful, but WITHOUT ANY
+WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+PARTICULAR PURPOSE. See the GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License along with
+this program. If not, see <https://www.gnu.org/licenses/>.
+-->
+
+<!-- This is the content that is interpolated into the master_layout template as "content" -->
+<div class="container">
+    <div class="row g-3">
+        <div class="col">
+            <div class="p-3">
+                <img src={{if not .loggedin}}"/images/worked-logo-red.png" alt="Authboss-worked red logo"
+                        {{else}}"/images/worked-logo-green.png" alt="Authboss-worked green logo"
+                        {{end}}
+                    class="mx-auto d-block"/>
+            </div>
+        </div>
+    </div>
+    <div class="row mb-2">
+        {{if not .loggedin}}
+        <div class="col justify-content-start">
+            <p>
+                This is the page to which a user is redirected when they log out. This is configured
+                via <span class="font-monospace">ab.Config.Paths.LogoutOK</span>
+            </p>
+        </div>
+        <div class="col d-flex justify-content-end">
+            <div class="col-4">
+                <a class="btn btn-dark" href="/">Back to home...</a>
+            </div>
+        </div>
+        {{else}}
+        <div class="col pull-left" style="font-size: x-large;">
+            <p>For some reason, you seem to still be signed in. That should not happen.</p>
+        </div>
+        {{end}}
+    </div>
+	{{with .flash_success}}<div class="alert alert-success">{{.}}</div>{{end}}
+	{{with .flash_error}}<div class="alert alert-danger">{{.}}</div>{{end}}
+</div>
+{{define "pageTitle"}}Authboss. Worked. Logout page{{end}}

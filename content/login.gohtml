@@ -1,0 +1,83 @@
+<!-- "scooter me fecit"
+
+Copyright 2022 B. Scott Michel
+
+This program is free software: you can redistribute it and/or modify it under
+the terms of the GNU General Public License as published by the Free Software
+Foundation, either version 3 of the License, or (at your option) any later
+version.
+
+This program is distributed in the hope that it will be useful, but WITHOUT ANY
+WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+PARTICULAR PURPOSE. See the GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License along with
+this program. If not, see <https://www.gnu.org/licenses/>.
+-->
+
+<!-- This is the content that is interpolated into the master_layout template as "content" -->
+<div class="container">
+    <div class="row g-3">
+        <div class="col">
+            <div class="p-3">
+                <img src={{if not .loggedin}}"/images/worked-logo-red.png" alt="Authboss-worked red logo"
+                        {{else}}"/images/worked-logo-green.png" alt="Authboss-worked green logo"
+                        {{end}}
+                    class="mx-auto d-block"/>
+            </div>
+        </div>
+    </div>
+    <div class="row mb-2">
+        {{if not .loggedin}}
+        <div class="col justify-content-start">
+            <p>
+                This is the ordinary sign-in page (versus the root ("/") index page.) The user came here in one of three ways:
+            </p>
+            <ul>
+        		<li>Explicitly came to this page,</li>
+                <li>Their session timed out/expired, or</li>
+                <li>Their login credentials were invalid.</li>
+            </ul>
+            <p>
+                No matter how they came here, this is where they need to sign in correctly.
+            </p>
+            <p>
+                If you look at the <span class="font-monospace">login.gohtml</span> HTML template, you'll notice that it references a
+                <span class="font-monospace">_login_form</span> template. <i>_login_form</i> is a template fragment, located in the
+                <span class="font-monospace">content/fragments/_login_form.gohtml</span> source file.
+            </p>
+        </div>
+        <div class="col d-flex justify-content-end">
+            {{template "_login_form" .}}
+            {{with .errors}}{{with (index . "")}}{{range .}}<span>{{.}}</span><br />{{end}}{{end}}{{end -}}
+        </div>
+        {{else}}
+        <nav class="navbar navbar-expand-lg bg-light">
+            <div class="container-fluid">
+                <a class="navbar-brand" href="#">Authboss</a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="collapse navbar-collapse" id="navbarSupportedContent">
+                <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                    <li class="nav-item">
+                        <a class="nav-link active" aria-current="page" href="#">Home</a>
+                    </li>
+
+                </ul>
+                <a href="/auth/logout" type="button" class="d-flex btn btn-primary">Logout</a>
+                <!-- <form class="d-flex" role="search">
+                    <input class="form-control me-2" type="search" placeholder="Search" aria-label="Search">
+                    <button class="btn btn-outline-success" type="submit">Search</button>
+                </form> -->
+            </div>
+        </nav>
+        <div class="col pull-left" style="font-size: x-large;">
+            <p>Looks like you logged in as {{ .current_user_name }}.</p>
+        </div>
+        {{end}}
+    </div>
+	{{with .flash_success}}<div class="alert alert-success">{{.}}</div>{{end}}
+	{{with .flash_error}}<div class="alert alert-danger">{{.}}</div>{{end}}
+</div>
+{{define "pageTitle"}}Authboss. Worked. Login page{{end}}
