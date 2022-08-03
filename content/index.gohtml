@@ -1,0 +1,49 @@
+<!-- "scooter me fecit"
+
+Copyright 2022 B. Scott Michel
+
+This program is free software: you can redistribute it and/or modify it under
+the terms of the GNU General Public License as published by the Free Software
+Foundation, either version 3 of the License, or (at your option) any later
+version.
+
+This program is distributed in the hope that it will be useful, but WITHOUT ANY
+WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+PARTICULAR PURPOSE. See the GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License along with
+this program. If not, see <https://www.gnu.org/licenses/>.
+-->
+
+<!-- This is the content that is interpolated into the master_layout template as "content" -->
+<div class="container">
+    <div class="row g-3">
+        <div class="col">
+            <div class="p-3">
+                <img src={{if not .loggedin}}"/images/worked-logo-red.png" alt="Authboss-worked red logo"
+                        {{else}}"/images/worked-logo-green.png" alt="Authboss-worked green logo"
+                        {{end}}
+                    class="mx-auto d-block"/>
+            </div>
+        </div>
+    </div>
+    <div class="row mb-2">
+        {{if not .loggedin}}
+        <div class="col justify-content-start">
+            <p class="fs-3">Speak, Friend, and Enter.</p>
+        </div>
+        <div class="col d-flex justify-content-end">
+            {{template "_login_form" .}}
+            {{with .errors}}{{with (index . "")}}{{range .}}<span>{{.}}</span><br />{{end}}{{end}}{{end -}}
+        </div>
+        {{else}}
+        {{template "_navbar" .}}
+        <div class="col pull-left" style="font-size: x-large;">
+            <p>Looks like you logged in as {{ .current_user_name }}.</p>
+        </div>
+        {{end}}
+    </div>
+	{{with .flash_success}}<div class="alert alert-success">{{.}}</div>{{end}}
+	{{with .flash_error}}<div class="alert alert-danger">{{.}}</div>{{end}}
+</div>
+{{define "pageTitle"}}Authboss. Worked. Index Page{{end}}

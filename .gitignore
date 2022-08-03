@@ -1,5 +1,9 @@
 *.exe
 go.work
 go.work.sum
-explan_udata.sqlite3
+worked_udata.sqlite3
 .vscode/settings.json
+data/config/worked-config.yml
+# Backup files:
+*.un~
+*~

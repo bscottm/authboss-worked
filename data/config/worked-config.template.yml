@@ -1,0 +1,31 @@
+# =~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~
+# Example Authboss-worked configuration data
+# =~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~
+
+# Host/address and port where the worked example's API services requests
+# listenAddr:
+#    host: localhost
+#    port: 3000
+
+# Session and cookie generator seeds: These are Base64-encoded values that contain
+# 64 bytes used as the initial seed or key for the generator. The genkey/genkey.go
+# program is an example of how to generate these seeds.
+#
+# seeds:
+#     session: Base64-encoded string here.
+#     cookie:  Base64-encoded string here.
+#     csrf: Base-64 encoded string here.
+#
+#
+# Optional module middleware to turn on/off. Set to "false" to disable.
+#
+# features:
+#   confirm: true
+#   lock: true
+#   remember: true
+#
+# Debugging flags
+# - template_var: Template variable values
+#
+# debugging:
+#    template_vars: true

@@ -1,0 +1,70 @@
+<!-- "scooter me fecit"
+
+Copyright 2022 B. Scott Michel
+
+This program is free software: you can redistribute it and/or modify it under
+the terms of the GNU General Public License as published by the Free Software
+Foundation, either version 3 of the License, or (at your option) any later
+version.
+
+This program is distributed in the hope that it will be useful, but WITHOUT ANY
+WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+PARTICULAR PURPOSE. See the GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License along with
+this program. If not, see <https://www.gnu.org/licenses/>.
+-->
+
+<div class="container">
+	<div class="row g-3">
+		<div class="col p-3">
+			<img src="/images/worked-logo-gradient.png" alt="Authboss-worked registration logo" class="mx-auto d-block"/>
+		</div>
+	</div>
+	<div class="row">
+		<div class="col-6">
+			<form action="/auth/recover/end" method="post">
+				{{with .errors}}{{with (index . "")}}{{range .}}
+					<div class="alert alert-danger">
+						<span class="bi-exclamation-triangle-fill" fill="red">&nbsp;{{.}}</span>
+					</div>
+				{{end}}{{end}}{{end -}}
+				<div class="row mb-3">
+					<label for="password" class="col-2 col-form-label">New Password</label>
+					<div class="col-8">
+						<input type="password" class="form-control password" name="password" placeholder=""/>
+					</div>
+					{{with .errors}}{{range .password}}
+						<div class="alert alert-danger">
+							<span class="bi-exclamation-triangle-fill" fill="red">&nbsp;{{.}}</span>
+						</div>
+					{{end}}{{end -}}
+				</div>
+				<div class="row mb-3">
+					<label for="confirm_password" class="col-2 col-form-label">Confirm New Password</label>
+					<div class="col-8">
+						<input type="password" class="form-control password" name="confirm_password" placeholder=""/>
+					</div>
+					{{with .errors}}{{range .confirm_password}}
+						<div class="alert alert-danger">
+							<span class="bi-exclamation-triangle-fill" fill="red">&nbsp;{{.}}</span>
+						</div>
+					{{end}}{{end -}}
+				</div>
+                <div class="text-center">
+				    <button type="submit" class="btn btn-primary">Reset password!</button>
+                </div>
+                <!-- Recovery token MUST BE posted via the form or Authboss won't know who is trying to recover their
+                     account. -->
+                <input type="hidden" name="token" value="{{ .recovery_token }}">
+				<!-- Cross-Site Replay Attack field -->
+				{{ .csrfField }}
+			</form>
+		</div>
+		<div class="col">
+		<p>
+			Password/account recovery page. Once you get to this page, you can change your password.
+		</p>
+	</div>
+</div>
+{{define "pageTitle"}}Authboss. Worked. Authboss. Worked. Reset Password.{{end}}

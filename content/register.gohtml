@@ -1,0 +1,90 @@
+<!-- "scooter me fecit"
+
+Copyright 2022 B. Scott Michel
+
+This program is free software: you can redistribute it and/or modify it under
+the terms of the GNU General Public License as published by the Free Software
+Foundation, either version 3 of the License, or (at your option) any later
+version.
+
+This program is distributed in the hope that it will be useful, but WITHOUT ANY
+WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+PARTICULAR PURPOSE. See the GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License along with
+this program. If not, see <https://www.gnu.org/licenses/>.
+-->
+
+<div class="container">
+	<div class="row g-3">
+		<div class="col p-3">
+			<img src="/images/worked-logo-gradient.png" alt="Authboss-worked registration logo" class="mx-auto d-block"/>
+		</div>
+	</div>
+	<div class="row">
+		<div class="col-6">
+			<form action="/auth/register" method="post">
+				{{with .errors}}{{with (index . "")}}{{range .}}
+					<div class="alert alert-danger">
+						<span class="bi-exclamation-triangle-fill" fill="red">&nbsp;{{.}}</span>
+					</div>
+				{{end}}{{end}}{{end -}}
+				<!-- If you want to use a username instead of e-mail as the user's unique identifier, uncomment and
+					use this field. Also uncomment the validation code in authBoss.go.
+
+				<div class="row mb-3">
+					<label for="name" class="col-2 col-form-label">Your user name</label>
+					<div class="col-8">
+						<input type="text" class="form-control text" name="name" value="{{with .preserve}}{{with .name}}{{.}}{{end}}{{end}}" placeholder="John Q. Public"/>
+					</div>
+					{{with .errors}}{{range .name}}<span class="bi-exclamation-triangle" style="color:red;">&nbsp;{{.}}</span><br />{{end}}{{end -}}
+				</div>
+				-->
+				<div class="row mb-3">
+					<label for="email" class="col-2 col-form-label">E-mail</label>
+					<div class="col-8">
+						<input type="email" class="form-control email" name="email" value="{{with .preserve}}{{with .email}}{{.}}{{end}}{{end}}" placeholder="user@example.com"/>
+					</div>
+					{{with .errors}}{{range .email}}
+						<div class="alert alert-danger">
+							<span class="bi-exclamation-triangle-fill" fill="red">&nbsp;{{.}}</span>
+						</div>
+					{{end}}{{end -}}
+				</div>
+				<div class="row mb-3">
+					<label for="password" class="col-2 col-form-label">Password</label>
+					<div class="col-8">
+						<input type="password" class="form-control password" name="password" placeholder=""/>
+					</div>
+					{{with .errors}}{{range .password}}
+						<div class="alert alert-danger">
+							<span class="bi-exclamation-triangle-fill" fill="red">&nbsp;{{.}}</span>
+						</div>
+					{{end}}{{end -}}
+				</div>
+				<div class="row mb-3">
+					<label for="confirm_password" class="col-2 col-form-label">Confirm Password</label>
+					<div class="col-8">
+						<input type="password" class="form-control password" name="confirm_password" placeholder=""/>
+					</div>
+					{{with .errors}}{{range .confirm_password}}
+						<div class="alert alert-danger">
+							<span class="bi-exclamation-triangle-fill" fill="red">&nbsp;{{.}}</span>
+						</div>
+					{{end}}{{end -}}
+				</div>
+				<div class="text-center">
+					<button type="submit" class="btn btn-primary">Register</button>
+				</div>
+				<!-- Cross-Site Replay Attack field -->
+				{{ .csrfField }}
+			</form>
+		</div>
+		<div class="col">
+		<p>
+			Simple form for registering the user's e-mail and collecting their initial password. The user might have to go through
+			the confirmation process if enabled in the YML configuration.
+		</p>
+	</div>
+</div>
+{{define "pageTitle"}}Authboss. Worked. Registration{{end}}
