@@ -30,7 +30,7 @@ This is where templates are loaded and rendered, and implements the
   a `Templates *` object. `TemplateLoader()` walks the `content` subdirectory to
   load and parse a master template, fragment templates common to (or frequently
   used by) page templates and the page templates themselves. The `Template` type
-  retains enough state to reload (hot load) all HTML templates when a fileysstem
+  retains enough state to reload (hot load) all HTML templates when a filesystem
   change is detected.
   
   - Naming convention: 
@@ -84,8 +84,8 @@ This is where templates are loaded and rendered, and implements the
       }
       ````
 
-- `Load` ensures that a requested Authboss HTML template page is loaded (interface function.) You can
-  see this in the log:
+- `Load` (Authboss interface) ensures that a requested Authboss HTML template
+  page is loaded. You can see this in the log:
 
     ````
     [CONFIG] 2022/07/26 09:34:57 Templates.Load: Verifying login
@@ -101,7 +101,7 @@ This is where templates are loaded and rendered, and implements the
     If `Load` doesn't find the named page in `Templates.templateMap`, it will
     log a _FATAL_ message and terminate `authboss-worked`.
 
-- `Render` renders a named page for Authboss (interface function.) This just
+- `Render` (Authboss interface) renders a named page for Authboss. This just
   retrieves the pages template from `Templates.templateMap` and calls
   `html.ExecuteTemplate`.
 
@@ -110,14 +110,14 @@ This is where templates are loaded and rendered, and implements the
   where Authboss crafts a MIME-encoded e-mail. See the `nonRenderedTemplates`
   map and its usage.
 
+
 ### Template variables
 
-The `Render` authboss interface function receives a `authboss.HTMLData` object,
-which is a `map[string]string`. The `authboss.HTMLData` object stores
-associations between variables referenced in the templates and their values.
-These associations are gathered in a HTTP handler function and stored in both
-the Gin and the `http.Request` contexts with the `context.Context` key,
-`authboss.CTXKeyData`.
+The `Render` interface function receives a `authboss.HTMLData` object, which is
+a `map[string]string`. The `authboss.HTMLData` object stores associations
+between variables referenced in the templates and their values. These
+associations are gathered in a HTTP handler function and stored in both the Gin
+and the `http.Request` contexts with the `authboss.CTXKeyData` key.
 
 For example, `loggedin` is a boolean flag indicating whether the user is
 currently logged in and used as a condition in several templates:
@@ -198,11 +198,12 @@ or change data, you have to reinject it into the `http.Request` context:
 
 - `AuthStorer` contains the [GORM][gorm.io] connection.
 
-- `WorkedUser` contains all of the state related to a user with an embedded
-  `AuthStorer` pointer and an embedded `UserState` structure. The `AuthStorer`
-  pointer enables the Authboss user-related interface functions (confirmations,
-  lock status, ...) to query the database and avoid carrying that data in the
-  `UserState` structure.
+- `WorkedUser` contains all of the state related to a user and user management: an embedded
+  `AuthStorer` pointer and an embedded `UserState` structure.
+  
+  - The `AuthStorer` pointer enables the Authboss user-related interface
+    functions (confirmations, lock status, ...) to query the database and avoids
+    carrying that data in the `UserState` structure.
 
 - `AuthStorer` specializes the `ServerStorer` and `CreatingServer` interfaces.
    whereas `WorkedUser` specializes the `ConfirmingServerStorer`,
@@ -215,11 +216,11 @@ or change data, you have to reinject it into the `http.Request` context:
 
 - The `ConfirmingServerStorer`, `RecoveringServerStorer`,
   `RememberingServerStorer` are intended to operate on structure members. The
-  demo sends that data directly to the database, which puts additional pressure
-  on the underlying database server (SQLite3). There is a pattern to the
-  sequence by which Authboss gets and puts data for these interfaces. However,
-  it would be a suboptimal design to rely on those patterns. (_Note_: This is
-  not a criticism of Authboss' design.)
+  demo sends that data directly to the database as UPSERTs, which puts
+  additional pressure on the underlying database server (SQLite3). There is a
+  pattern to the sequence by which Authboss gets and puts data for these
+  interfaces. However, it would be a suboptimal design to rely on those
+  patterns. (_Note_: This is not a criticism of Authboss' design.)
 
 - The `WorkedUser` specializations show to use a [GORM][gorm.io] subquery to
   join back to the `udata` table (`UserData` type) to get the user's GUID from
