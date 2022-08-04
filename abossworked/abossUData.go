@@ -65,7 +65,8 @@ type WorkedUser struct {
 	*AuthStorer
 	UserData
 
-	// Authboss "arbitrary" data map.
+	// Authboss "arbitrary" data map -- this is where Authboss stashes form data
+	// that needs to be retained across forms/pages.
 	arbitraryData map[string]string
 }
 
@@ -283,15 +284,12 @@ func (storer AuthStorer) LoadByConfirmSelector(ctx context.Context, selector str
 
 	storer.log.Printf("LoadByConfirmSelector result: %v", confirm)
 
-	if result.Error != nil {
+	if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+		storer.log.Print("LoadByConfirmSelector Association to User did not retrieve a confirmation.")
+		storer.log.Printf("selector: %s", selector)
+		return &WorkedUser{}, authboss.ErrUserNotFound
+	} else if result.Error != nil {
 		return &WorkedUser{}, result.Error
-	} else if result.RowsAffected == 0 {
-		return &WorkedUser{}, authboss.ErrUserNotFound
-	} else if len(confirm.User.GUID) == 0 {
-		storer.log.Fatalf("LoadByConfirmSelector Association to User did not find GUID.")
-		// NOTREACHED
-		// Should never happen. Truly.
-		return &WorkedUser{}, authboss.ErrUserNotFound
 	}
 
 	return &WorkedUser{
@@ -317,15 +315,12 @@ func (storer AuthStorer) LoadByRecoverSelector(ctx context.Context, selector str
 
 	storer.log.Printf("LoadByRecoverySelector result: %v", recovery)
 
-	if result.Error != nil {
+	if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+		storer.log.Print("LoadByRecoverySelector Association to User did not retrieve a recovery request.")
+		storer.log.Printf("selector: %s", selector)
+		return &WorkedUser{}, authboss.ErrUserNotFound
+	} else if result.Error != nil {
 		return &WorkedUser{}, result.Error
-	} else if result.RowsAffected == 0 {
-		return &WorkedUser{}, authboss.ErrUserNotFound
-	} else if len(recovery.User.GUID) == 0 {
-		storer.log.Fatalf("LoadByConfirmSelector Association to User did not find GUID.")
-		// NOTREACHED
-		// Should never happen. Truly.
-		return &WorkedUser{}, authboss.ErrUserNotFound
 	}
 
 	return &WorkedUser{
@@ -371,7 +366,7 @@ func (storer AuthStorer) DelRememberTokens(ctx context.Context, pid string) erro
 	return guidTX.Error
 }
 
-// UseRememberToken finds the pid-token pair and deletes it.
+// UseRememberToken finds the pid-token pair and deletes it (consumes the remember token).
 // If the token could not be found return ErrTokenNotFound
 func (storer AuthStorer) UseRememberToken(ctx context.Context, pid, token string) error {
 	var userGUID string
@@ -384,6 +379,13 @@ func (storer AuthStorer) UseRememberToken(ctx context.Context, pid, token string
 	guidTX := storer.UserDB.Model(&RememberMeTokens{}).Delete(&RememberMeTokens{GUID: userGUID, Token: token})
 
 	storer.log.Printf("UseRememberToken: %v rows affected (GUID: %v, token %v).", guidTX.RowsAffected, userGUID, token)
+	if errors.Is(guidTX.Error, gorm.ErrRecordNotFound) {
+		storer.log.Print("UseRememberToken: (GUID, token) pair not found.")
+		return authboss.ErrTokenNotFound
+	} else if guidTX.Error != nil {
+		storer.log.Print("UseRememberToken: GORM database error: %w.", guidTX.Error)
+	}
+
 	return guidTX.Error
 }
 
@@ -459,8 +461,8 @@ func (user *WorkedUser) GetConfirmed() (confirmed bool) {
 
 	subq := user.AuthStorer.UserDB.Model(&UserData{}).Select("guid").Where(&UserData{Email: user.GetPID()})
 	result := user.AuthStorer.UserDB.Model(&Confirmations{}).
-		Select("Confirmed").
-		Where("GUID IN (?)", subq).
+		Select("confirmed").
+		Where("guid IN (?)", subq).
 		First(&confirmed)
 
 	if result.Error == nil {
@@ -473,6 +475,7 @@ func (user *WorkedUser) GetConfirmed() (confirmed bool) {
 // PutConfirmed stores the user's confirmation status
 func (user *WorkedUser) PutConfirmed(confirmed bool) {
 	tx := user.AuthStorer.UserDB.Clauses(clause.OnConflict{
+		// UPSERT conditions
 		Columns:   []clause.Column{{Name: "guid"}},
 		DoUpdates: clause.AssignmentColumns([]string{"confirmed"}),
 	}).Create(&Confirmations{
@@ -503,8 +506,8 @@ func (user *WorkedUser) GetConfirmSelector() string {
 
 	subq := user.AuthStorer.UserDB.Model(&UserData{}).Select("guid").Where(&UserData{Email: user.GetPID()})
 	result := user.AuthStorer.UserDB.Model(&Confirmations{}).
-		Select("Selector").
-		Where("GUID IN (?)", subq).
+		Select("selector").
+		Where("guid IN (?)", subq).
 		First(&sqlSelector)
 
 	if result.Error == nil && sqlSelector.Valid {
@@ -517,6 +520,7 @@ func (user *WorkedUser) GetConfirmSelector() string {
 // PutConfirmSelector stores the user's confirmation selector
 func (user *WorkedUser) PutConfirmSelector(selector string) {
 	tx := user.AuthStorer.UserDB.Clauses(clause.OnConflict{
+		// UPSERT conditions
 		Columns:   []clause.Column{{Name: "guid"}},
 		DoUpdates: clause.AssignmentColumns([]string{"selector"}),
 	}).Create(&Confirmations{
@@ -547,8 +551,8 @@ func (user *WorkedUser) GetConfirmVerifier() string {
 
 	subq := user.AuthStorer.UserDB.Model(&UserData{}).Select("guid").Where(&UserData{Email: user.GetPID()})
 	result := user.AuthStorer.UserDB.Model(&Confirmations{}).
-		Select("Verifier").
-		Where("GUID IN (?)", subq).
+		Select("verifier").
+		Where("guid IN (?)", subq).
 		First(&sqlVerifier)
 
 	if result.Error == nil && sqlVerifier.Valid {
@@ -563,6 +567,7 @@ func (user *WorkedUser) PutConfirmVerifier(verifier string) {
 	// UPSERT to update the verifier -- if the GUID already exists, and it likely does,
 	// then only update the verifier.
 	tx := user.AuthStorer.UserDB.Clauses(clause.OnConflict{
+		// UPSERT conditions
 		Columns:   []clause.Column{{Name: "guid"}},
 		DoUpdates: clause.AssignmentColumns([]string{"verifier"}),
 	}).Create(&Confirmations{
@@ -614,8 +619,9 @@ func (user *WorkedUser) GetAttemptCount() (attempts int) {
 
 	subq := user.AuthStorer.UserDB.Model(&UserData{}).Select("guid").Where(&UserData{Email: user.GetPID()})
 	result := user.AuthStorer.UserDB.Model(&LockedAccount{}).
+		// Note: You can use the Go structure field name in Select() clauses.
 		Select("AttemptCount").
-		Where("GUID IN (?)", subq).
+		Where("guid IN (?)", subq).
 		First(&attempts)
 
 	if result.Error != nil {
@@ -631,6 +637,7 @@ func (user *WorkedUser) PutAttemptCount(attempts int) {
 	// UPSERT to update the attempt count -- if the GUID already exists, and it likely does,
 	// then only update the attempt count.
 	tx := user.AuthStorer.UserDB.Clauses(clause.OnConflict{
+		// UPSERT conditions:
 		Columns:   []clause.Column{{Name: "guid"}},
 		DoUpdates: clause.AssignmentColumns([]string{"attempt_count"}),
 	}).Create(&LockedAccount{
@@ -658,8 +665,9 @@ func (user *WorkedUser) GetLastAttempt() (last time.Time) {
 
 	subq := user.AuthStorer.UserDB.Model(&UserData{}).Select("guid").Where(&UserData{Email: user.GetPID()})
 	result := user.AuthStorer.UserDB.Model(&LockedAccount{}).
+		// Note: You can use the Go structure field name in Select() clauses.
 		Select("LastAttempt").
-		Where("GUID IN (?)", subq).
+		Where("guid IN (?)", subq).
 		First(&last)
 
 	if result.Error != nil {
@@ -701,8 +709,8 @@ func (user *WorkedUser) GetLocked() (locked time.Time) {
 
 	subq := user.AuthStorer.UserDB.Model(&UserData{}).Select("guid").Where(&UserData{Email: user.GetPID()})
 	result := user.AuthStorer.UserDB.Model(&LockedAccount{}).
-		Select("Locked").
-		Where("GUID IN (?)", subq).
+		Select("locked").
+		Where("guid IN (?)", subq).
 		First(&locked)
 
 	if result.Error != nil {
@@ -851,7 +859,9 @@ func (user *WorkedUser) GetRecoveryCodes() string {
 func (user *WorkedUser) PutRecoveryCodes(codes string) {
 	user.RecoveryCodes = codes
 }
+*/
 
+/* SMS 2FA: TBD
 // GetSMSPhoneNumber returns the user's phone number to which a text message
 // with a 2FA code will be sent
 func (user *WorkedUser) GetSMSPhoneNumber() string {

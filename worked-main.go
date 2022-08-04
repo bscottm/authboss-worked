@@ -1,3 +1,4 @@
+// The "main" package/entry point for authboss-worked.
 package main
 
 /* "scooter me fecit"
