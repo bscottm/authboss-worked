@@ -903,3 +903,8 @@ func makeSQLNullString(str string) sql.NullString {
 
 	return sql.NullString{Valid: false}
 }
+
+func userSessionCleanup(ctx context.Context, user *WorkedUser) {
+	// Removes all user remember-me tokens
+	user.DelRememberTokens(ctx, user.GetPID())
+}

@@ -31,6 +31,9 @@ import (
 
 	"github.com/oxtoacart/bpool"
 	"github.com/volatiletech/authboss/v3"
+
+	// Pretty printer
+	"github.com/davecgh/go-spew/spew"
 )
 
 const (
@@ -52,6 +55,10 @@ type TemplateState struct {
 type Templates struct {
 	// Logger
 	logger *log.Logger
+	// Pretty printer
+	pprint *spew.ConfigState
+	// Show template variables in the log?
+	showTemplateVars bool
 	// The mapping between an authboss module/page and a HTML template
 	templateMap map[string]TemplateState
 	// Additional (key, value) data used in the master template
@@ -80,9 +87,10 @@ type pathFilterFunc func(fullPath string, baseName string) bool
 // decided we like the file and load the file's content.
 type actionFunc func(name string, path string, relPath string, content []byte) error
 
-// Create a pool with 10 buffers
+// Create a pool with 4 buffers -- remember that this is a prototype/demo, so not expecting
+// thundering herds...
 var (
-	bufPool = bpool.NewBufferPool(10)
+	bufPool = bpool.NewBufferPool(4)
 
 	// These templates are not rendered in the normal way with ExecuteTemplate or
 	// with a master layout template.
@@ -113,11 +121,12 @@ var (
 func (templates *Templates) Load(names ...string) error {
 	if len(templates.templateMap) > 0 {
 		for _, name := range names {
-			templates.logger.Printf("Templates.Load: Verifying %s", name)
 			_, ok := templates.templateMap[name]
 			if !ok {
 				return fmt.Errorf("Templates.Load: no such template %s loaded", name)
 			}
+
+			templates.logger.Printf("Templates.Load: %s present and accounted for.", name)
 		}
 
 		return nil
@@ -149,8 +158,15 @@ func (templates *Templates) Render(ctx context.Context, page string, data authbo
 		// Not special.
 		// Combine the incoming with the additional static data.
 		combined := authboss.NewHTMLData().Merge(data)
+		// Add the Authboss page
+		combined["abosspage"] = page
+		// Merge extra data from the template
 		if htmlData, valid := templates.TemplateData[page]; valid {
 			combined.Merge(htmlData)
+		}
+
+		if templates.showTemplateVars {
+			templates.logger.Printf("Template data:\n%s", templates.pprint.Sdump(combined))
 		}
 
 		err = tmpl.html.ExecuteTemplate(buf, htmlMasterLayout, combined)
@@ -185,9 +201,15 @@ is rendered.
 The regular templates are loaded into a clone of the master template, where the
 the internal template name "content" references the actual template content.
 */
-func TemplateLoader(templateDir, fragmentDir, masterTemplate string, funcs template.FuncMap, logger *log.Logger) (*Templates, error) {
+func TemplateLoader(templateDir, fragmentDir, masterTemplate string, funcs template.FuncMap, cfg *ConfigData) (*Templates, error) {
+	ppconfig := spew.NewDefaultConfig()
+	ppconfig.Indent = "  "
+	ppconfig.SortKeys = true
+
 	tpls := &Templates{
-		logger:             logger,
+		logger:             cfg.ConfigLog,
+		pprint:             ppconfig,
+		showTemplateVars:   cfg.Debugging.TemplateVars,
 		templateMap:        map[string]TemplateState{},
 		TemplateData:       map[string]authboss.HTMLData{},
 		masterTemplate:     TemplateState{},

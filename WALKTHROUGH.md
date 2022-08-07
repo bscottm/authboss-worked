@@ -48,13 +48,14 @@ This is where templates are loaded and rendered, and implements the
     refers to a template named `content` for the actual page content.
 
     - Fragment templates (the `content/fragments` subdirectory) are parsed HTML
-      templates nested within the master layout.  See the `_login_form` and
-      `_navbar` template fragments for examples -- these are both nested within
-      the master template and can be referenced by the individual page
-      templates:
+      templates nested within the master layout.  See the `_login_form`,
+      `_logo_splash` and `_navbar` template fragments for examples -- these are
+      both nested within the master template and can be referenced by the
+      individual page templates:
 
       ````
       master_template -> _login_form
+                         _logo_splash
                          _navbar
       ````
 
@@ -70,6 +71,7 @@ This is where templates are loaded and rendered, and implements the
 
       ````
       master_template_clone -> _login_form
+                               _logo_splash
                                _navbar
                                content      <- the parsed index.gohtml nested template
       ````
@@ -79,6 +81,7 @@ This is where templates are loaded and rendered, and implements the
 
       ````
       templates.templateMap["index"] = { master_template_clone -> _login_html
+                                                               -> _logo_splash
                                                                -> _navbar
                                                                -> content
       }
@@ -88,14 +91,14 @@ This is where templates are loaded and rendered, and implements the
   page is loaded. You can see this in the log:
 
     ````
-    [CONFIG] 2022/07/26 09:34:57 Templates.Load: Verifying login
-    [CONFIG] 2022/07/26 09:34:57 Templates.Load: Verifying confirm_html
-    [CONFIG] 2022/07/26 09:34:57 Templates.Load: Verifying confirm_txt
-    [CONFIG] 2022/07/26 09:34:57 Templates.Load: Verifying recover_start
-    [CONFIG] 2022/07/26 09:34:57 Templates.Load: Verifying recover_end
-    [CONFIG] 2022/07/26 09:34:57 Templates.Load: Verifying recover_html
-    [CONFIG] 2022/07/26 09:34:57 Templates.Load: Verifying recover_txt
-    [CONFIG] 2022/07/26 09:34:57 Templates.Load: Verifying register
+    [CONFIG] 2022/08/06 12:59:35 Templates.Load: login present and accounted for.
+    [CONFIG] 2022/08/06 12:59:35 Templates.Load: confirm_html present and accounted for.
+    [CONFIG] 2022/08/06 12:59:35 Templates.Load: confirm_txt present and accounted for.
+    [CONFIG] 2022/08/06 12:59:35 Templates.Load: recover_start present and accounted for.
+    [CONFIG] 2022/08/06 12:59:35 Templates.Load: recover_end present and accounted for.
+    [CONFIG] 2022/08/06 12:59:35 Templates.Load: recover_html present and accounted for.
+    [CONFIG] 2022/08/06 12:59:35 Templates.Load: recover_txt present and accounted for.
+    [CONFIG] 2022/08/06 12:59:35 Templates.Load: register present and accounted for.
     ````
 
     If `Load` doesn't find the named page in `Templates.templateMap`, it will

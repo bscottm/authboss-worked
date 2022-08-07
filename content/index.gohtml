@@ -17,18 +17,9 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 
 <!-- This is the content that is interpolated into the master_layout template as "content" -->
 <div class="container">
-    <div class="row g-3">
-        <div class="col">
-            <div class="p-3">
-                <img src={{if not .loggedin}}"/images/worked-logo-red.png" alt="Authboss-worked red logo"
-                        {{else}}"/images/worked-logo-green.png" alt="Authboss-worked green logo"
-                        {{end}}
-                    class="mx-auto d-block"/>
-            </div>
-        </div>
-    </div>
-    <div class="row mb-2">
-        {{if not .loggedin}}
+    {{ template "_logo_splash" .}}
+    {{if not .loggedin}}
+    <div class="row my-2">
         <div class="col justify-content-start">
             <p class="fs-3">Speak, Friend, and Enter.</p>
         </div>
@@ -36,13 +27,17 @@ this program. If not, see <https://www.gnu.org/licenses/>.
             {{template "_login_form" .}}
             {{with .errors}}{{with (index . "")}}{{range .}}<span>{{.}}</span><br />{{end}}{{end}}{{end -}}
         </div>
-        {{else}}
+    </div>
+    {{else}}
+    <div class="row my-2">
         {{template "_navbar" .}}
+    </div>
+    <div class="row my-2">
         <div class="col pull-left" style="font-size: x-large;">
             <p>Looks like you logged in as {{ .current_user_name }}.</p>
         </div>
-        {{end}}
     </div>
+    {{end}}
 	{{with .flash_success}}<div class="alert alert-success">{{.}}</div>{{end}}
 	{{with .flash_error}}<div class="alert alert-danger">{{.}}</div>{{end}}
 </div>

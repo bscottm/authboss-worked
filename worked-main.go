@@ -34,7 +34,6 @@ func main() {
 		exitStatus   = 0
 		err          error
 		workedConfig *abossworked.ConfigData
-		router       *gin.Engine
 	)
 
 	mainLog := log.New(os.Stdout, "main ", log.LstdFlags)
@@ -46,9 +45,13 @@ func main() {
 		if err == nil {
 			defer authStorer.Close()
 
-			templates, err := abossworked.TemplateLoader("content", "content/fragments", "master_layout.gohtml", nil,
-				workedConfig.ConfigLog)
+			var templates *abossworked.Templates
+
+			templates, err = abossworked.TemplateLoader("content", "content/fragments", "master_layout.gohtml", nil,
+				workedConfig)
 			if err == nil {
+				var router *gin.Engine
+
 				router, err = abossworked.GinRouter(workedConfig, authStorer, templates)
 				if err == nil {
 					go gracefulShutdown(mainLog, authStorer)

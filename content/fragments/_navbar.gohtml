@@ -27,8 +27,20 @@ this program. If not, see <https://www.gnu.org/licenses/>.
                     </li>
                 </ul>
                 {{if .current_user_name}}
-                <span class="navbar-text mx-2">{{ .current_user_name }}</span>
-                <a href="/auth/logout" type="button" class="d-flex btn btn-primary">Logout</a>
+                <div class="d-flex">
+                    <ul class="navbar-nav me-auto mb-2 mb-lg-0 justify-content-end:">
+                        <!-- <span class="navbar-text mx-2">{{ .current_user_name }}</span> -->
+                        <li class="nav-item">
+                            {{ if ne .abosspage "app_user" }}<a href="/app/user" role="button" class="nav-link mx-2 btn btn-info">
+                            {{ else }}<a href="#" role="button" class="nav-line mx-2 btn brn-disabled">
+                            {{ end }}
+                            {{ .current_user_name }}</a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="/auth/logout" role="button" class="d-flex btn btn-primary">Logout</a>
+                        </li>
+                    </ul>
+                </div>
                 {{else}}
                 <span class="navbar-text">Not signed in????</span>
                 {{end}}
