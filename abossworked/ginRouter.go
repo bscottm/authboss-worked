@@ -77,10 +77,6 @@ func GinRouter(cfg *ConfigData, storer *AuthStorer, templates *Templates) (engin
 	logger := log.New(os.Stdout, "[ABOSSWORKED] ", log.LstdFlags)
 	sessionStore := makeSessionStore(storer, sessionCookieParams, sessionCookieName, sessionSeed, nil)
 
-	ppconfig := spew.NewDefaultConfig()
-	ppconfig.Indent = "  "
-	ppconfig.SortKeys = true
-
 	cookieStore := makeCookieStorer(cookieSeed, nil, logger)
 	cookieStore.HttpOnly = false
 	cookieStore.Secure = false
@@ -193,24 +189,13 @@ func GinRouter(cfg *ConfigData, storer *AuthStorer, templates *Templates) (engin
 				// Grab the recovery token if it's present (usually in the query string), make it
 				// available in the template renderer. Use Gin's BindQuery method to add the "token"
 				// to the HTMLData.
-				//
-				// You'd really prefer to have ctx.BindQuery() operate directly on templateData,
-				// but it's not recognized as a string map to string.
-				var queryData = map[string]string{}
-				bindErr := ctx.BindQuery(&queryData)
-				if bindErr != nil {
-					logger.Printf("BindQuery error: %v", bindErr)
-				} else if recoveryToken, valid := queryData["token"]; valid {
+				if recoveryToken, tokenPresent := ctx.GetQuery("token"); tokenPresent {
 					abossCTXData["recovery_token"] = recoveryToken
 				}
 
 				// Make the HTMLData available to both Gin and Authboss:
 				ctx.Set(string(authboss.CTXKeyData), abossCTXData)
 				ctx.Request = r.Clone(context.WithValue(r.Context(), authboss.CTXKeyData, abossCTXData))
-
-				if cfg.Debugging.TemplateVars {
-					logger.Printf("Template data:\n%s", ppconfig.Sdump(abossCTXData))
-				}
 			}
 		}(),
 	)
@@ -234,9 +219,7 @@ func GinRouter(cfg *ConfigData, storer *AuthStorer, templates *Templates) (engin
 	*/
 	engine.Any("/auth/*wild", gin.WrapH(http.StripPrefix("/auth", aboss.Config.Core.Router)))
 
-	/* Route the application's namespace as a group. */
-	appspace := engine.Group("/app")
-
+	/* Pull all of the /app middleware together: */
 	appMiddleware := []gin.HandlerFunc{
 		// Note: authboss.RespondRedirect overrides the configuration's default.
 		adapter.Wrap(authboss.Middleware2(aboss, authboss.RequireFullAuth, authboss.RespondRedirect)),
@@ -252,8 +235,12 @@ func GinRouter(cfg *ConfigData, storer *AuthStorer, templates *Templates) (engin
 		appMiddleware = append(appMiddleware, adapter.Wrap(lock.Middleware(aboss)))
 	}
 
+	/* Route the application's namespace as a group. */
+	appspace := engine.Group("/app")
 	appspace.Use(appMiddleware...)
 	appspace.GET("/", renderPageAsTemplate("app_index", templates))
+	appspace.GET("/user", renderPageAsTemplate("app_user", templates))
+	appspace.POST("/user", userManagementPost(aboss))
 
 	// Static content:
 	engine.StaticFS("/images", http.Dir("content/images"))
@@ -286,6 +273,65 @@ func renderPageAsTemplate(pageName string, templateCatalog *Templates) gin.Handl
 			w.Header().Set("Content-Type", "text/plain")
 			w.WriteHeader(http.StatusBadRequest)
 			w.Write([]byte(fmt.Sprint(fmt.Errorf("template render error: %v", err))))
+		}
+	}
+}
+
+func userManagementPost(aboss *authboss.Authboss) gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		currentPassword, currentPresent := ctx.GetPostForm("current_password")
+		newPassword, newPresent := ctx.GetPostForm("password")
+		confirmPassword, confirmPresent := ctx.GetPostForm("confirm_password")
+
+		doRedirect := false
+		errMessage := ""
+
+		switch {
+		case !currentPresent || len(currentPassword) == 0:
+			errMessage = "invalid or missing current password"
+			doRedirect = true
+		case !newPresent || len(newPassword) == 0:
+			errMessage = "invalid or missing new password"
+			doRedirect = true
+		case !confirmPresent || len(confirmPassword) == 0:
+			errMessage = "invalid or missing confirm password"
+			doRedirect = true
+		case newPassword != confirmPassword:
+			errMessage = "new password does not match confirm password"
+			doRedirect = true
+		default:
+			currentUser, err := aboss.LoadCurrentUser(&ctx.Request)
+			if currentUser != nil && err == nil {
+				if user, validUser := currentUser.(*WorkedUser); validUser {
+					if authboss.VerifyPassword(user, currentPassword) != nil {
+						errMessage = "current password did not verify."
+						doRedirect = true
+					} else {
+						// Sanity checks passed, user's current password verifies with what we have in the
+						// database...
+
+						// 1. Update the password, kill current session and cookies:
+						aboss.UpdatePassword(ctx.Request.Context(), user, newPassword)
+						authboss.DelAllSession(ctx.Writer, []string{})
+						authboss.DelKnownCookie(ctx.Writer)
+
+						// 2. Send them to the root page.
+						ctx.Redirect(http.StatusFound, "/")
+						return
+					}
+				} else {
+					errMessage = "type annotation to WorkedUser failed (??)"
+					doRedirect = true
+				}
+			} else {
+				errMessage = "unable to determine your user name or info (??)"
+				doRedirect = true
+			}
+		}
+
+		if doRedirect {
+			authboss.PutSession(ctx.Writer, authboss.FlashErrorKey, errMessage)
+			ctx.Redirect(http.StatusFound, ctx.Request.URL.String())
 		}
 	}
 }
